@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratorium Virtual Segitiga Siku-Siku</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    html, body, #app {
+      height: 100%;
+      width: 100%;
+    }
+    #app {
+      overflow: auto;
+    }
+    .math-input {
+      font-family: 'Cambria Math', 'Times New Roman', serif;
+    }
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .angle-badge {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+    .math-keyboard {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 2px solid #e2e8f0;
+      padding: 12px;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .math-keyboard.hidden {
+      display: none;
+    }
+    .math-btn {
+      padding: 8px 12px;
+      margin: 4px;
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+      font-family: 'Cambria Math', serif;
+    }
+    .math-btn:hover {
+      background: #cbd5e1;
+      transform: scale(1.05);
+    }
+    .fraction-display {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 2px;
+    }
+    .fraction-num, .fraction-den {
+      padding: 0 4px;
+      text-align: center;
+    }
+    .fraction-num {
+      border-bottom: 2px solid currentColor;
+    }
+    .sqrt-display {
+      display: inline-block;
+      position: relative;
+      vertical-align: -2px;
+      font-size: 1.1em;
+    }
+    .sqrt-radicand {
+      display: inline-block;
+      border-top: 2px solid currentColor;
+      padding-top: 2px;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+  <div id="app" class="w-full h-full overflow-auto pb-56">
+   <div class="min-h-full p-4 md:p-6 lg:p-8"><!-- Header -->
+    <header class="text-center mb-6">
+     <h1 id="main-title" class="text-2xl md:text-3xl font-bold text-slate-800 mb-2">🔬 Laboratorium Virtual Segitiga Siku-Siku</h1>
+     <p id="instruction-text" class="text-slate-600 text-sm md:text-base">Pilih sudut, kumpulkan data, dan temukan pola perbandingan sisi!</p>
+    </header>
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6"><!-- LEFT PANEL -->
+     <div class="space-y-6"><!-- Angle Selection -->
+      <div class="card p-5">
+       <div class="flex items-center gap-3 mb-4"><span class="text-2xl">📐</span>
+        <h2 class="text-lg font-semibold text-slate-800">Pilih Sudut</h2>
+       </div>
+       <div class="flex gap-3"><button onclick="setAngle(30)" id="btn-30" class="flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-200 bg-blue-600 text-white shadow-lg">30°</button> <button onclick="setAngle(45)" id="btn-45" class="flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-200 bg-slate-100 text-slate-600 hover:bg-blue-100">45°</button> <button onclick="setAngle(60)" id="btn-60" class="flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-200 bg-slate-100 text-slate-600 hover:bg-blue-100">60°</button>
+       </div>
+      </div><!-- Triangle -->
+      <div class="card p-5">
+       <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-slate-800">Visualisasi</h2><span id="current-angle-badge" class="angle-badge text-white px-3 py-1 rounded-full text-sm font-semibold">θ = 30°</span>
+       </div>
+       <div class="bg-slate-50 rounded-xl p-4 flex justify-center items-center" style="min-height: 280px;">
+        <svg id="triangle-svg" viewbox="0 0 400 320" class="w-full max-w-md"></svg>
+       </div>
+      </div><!-- Input -->
+      <div class="card p-5">
+       <h2 class="text-lg font-semibold text-slate-800 mb-4">Masukkan Salah Satu Sisi</h2>
+       <div class="grid grid-cols-3 gap-3 mb-4">
+        <div><label class="block text-xs font-medium text-slate-700 mb-2">Alas (a)</label> <input type="number" id="input-alas" min="1" max="100" step="0.01" placeholder="Nilai" class="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:border-blue-500 transition-colors" oninput="handleSideInput('alas')">
+        </div>
+        <div><label class="block text-xs font-medium text-slate-700 mb-2">Tinggi (t)</label> <input type="number" id="input-tinggi" min="1" max="100" step="0.01" placeholder="Nilai" class="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:border-blue-500 transition-colors" oninput="handleSideInput('tinggi')">
+        </div>
+        <div><label class="block text-xs font-medium text-slate-700 mb-2">Miring (m)</label> <input type="number" id="input-miring" min="1" max="100" step="0.01" placeholder="Nilai" class="w-full px-3 py-2 border-2 border-slate-200 rounded-lg focus:border-blue-500 transition-colors" oninput="handleSideInput('miring')">
+        </div>
+       </div>
+       <div id="calculated-values" class="bg-blue-50 rounded-lg p-3 mb-4 hidden">
+        <p class="text-xs font-medium text-blue-800 mb-2">Nilai Sisi Terhitung:</p>
+        <div class="grid grid-cols-3 gap-2 text-center text-sm">
+         <div class="bg-white rounded p-2">
+          <span class="text-xs text-slate-500">a</span>
+          <p id="calc-alas" class="font-semibold text-blue-700">-</p>
+         </div>
+         <div class="bg-white rounded p-2">
+          <span class="text-xs text-slate-500">t</span>
+          <p id="calc-tinggi" class="font-semibold text-blue-700">-</p>
+         </div>
+         <div class="bg-white rounded p-2">
+          <span class="text-xs text-slate-500">m</span>
+          <p id="calc-miring" class="font-semibold text-blue-700">-</p>
+         </div>
+        </div>
+       </div><button onclick="addDataPoint()" id="btn-add-data" class="btn-primary w-full py-2 px-4 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm" disabled> ➕ Tambah Data </button>
+      </div>
+     </div><!-- RIGHT PANEL -->
+     <div class="space-y-6"><!-- Data Table -->
+      <div class="card p-5">
+       <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-slate-800">Tabel Pengamatan</h2>
+        <div class="flex gap-2 items-center"><span id="data-count" class="text-sm text-slate-500">0/5</span> <button onclick="clearCurrentAngleData()" class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Hapus</button>
+        </div>
+       </div>
+       <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+         <thead>
+          <tr class="bg-slate-100">
+           <th class="px-2 py-2 text-left">No</th>
+           <th class="px-2 py-2 text-center">Alas</th>
+           <th class="px-2 py-2 text-center">Tinggi</th>
+           <th class="px-2 py-2 text-center">Miring</th>
+           <th class="px-2 py-2 text-center">Aksi</th>
+          </tr>
+         </thead>
+         <tbody id="data-table-body">
+          <tr>
+           <td colspan="5" class="px-2 py-6 text-center text-slate-400">Belum ada data</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div><!-- Row Detail - UNTUK MENGISI JAWABAN -->
+      <div class="card p-5" id="row-detail-section">
+       <div class="flex items-center gap-3 mb-4"><span class="text-2xl">🧮</span>
+        <h2 class="text-lg font-semibold text-slate-800">Hitung Perbandingan</h2>
+       </div>
+       <div class="mb-4"><label class="block text-sm font-medium text-slate-700 mb-2">Pilih Baris Data:</label> <select id="row-selector" onchange="selectRowFromDropdown()" class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 transition-colors focus:outline-none text-sm"> <option value="">-- Pilih Baris --</option> </select>
+       </div>
+       <div id="row-detail-display" class="text-center py-6 text-slate-400">
+        <p>Pilih salah satu baris untuk mengisi perbandingan sisi</p>
+       </div><!-- Form untuk mengisi jawaban perbandingan -->
+       <div id="ratio-input-form" class="hidden space-y-3 mt-4">
+        <div class="bg-purple-50 rounded-lg p-3 border border-purple-200"><label class="block text-sm font-medium text-purple-800 mb-2">t/m = ?</label> <input type="text" id="answer-tm" placeholder="a/b, sqrt(c), dll" class="w-full px-4 py-2 border-2 border-purple-300 rounded-lg focus:border-purple-500 transition-colors focus:outline-none text-sm" onfocus="showMathKeyboard(this)" oninput="updateMathPreview('tm')">
+         <div id="preview-tm" class="mt-2 min-h-6 text-sm text-purple-700 font-medium"></div>
+         <p id="feedback-tm" class="text-xs mt-2 hidden"></p>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-3 border border-blue-200"><label class="block text-sm font-medium text-blue-800 mb-2">a/m = ?</label> <input type="text" id="answer-am" placeholder="a/b, sqrt(c), dll" class="w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 transition-colors focus:outline-none text-sm" onfocus="showMathKeyboard(this)" oninput="updateMathPreview('am')">
+         <div id="preview-am" class="mt-2 min-h-6 text-sm text-blue-700 font-medium"></div>
+         <p id="feedback-am" class="text-xs mt-2 hidden"></p>
+        </div>
+        <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200"><label class="block text-sm font-medium text-emerald-800 mb-2">t/a = ?</label> <input type="text" id="answer-ta" placeholder="a/b, sqrt(c), dll" class="w-full px-4 py-2 border-2 border-emerald-300 rounded-lg focus:border-emerald-500 transition-colors focus:outline-none text-sm" onfocus="showMathKeyboard(this)" oninput="updateMathPreview('ta')">
+         <div id="preview-ta" class="mt-2 min-h-6 text-sm text-emerald-700 font-medium"></div>
+         <p id="feedback-ta" class="text-xs mt-2 hidden"></p>
+        </div><button onclick="submitRowAnswer()" class="btn-primary w-full py-2 px-4 text-white font-semibold rounded-lg text-sm"> ✅ Simpan Jawaban </button>
+       </div>
+      </div><!-- Student Answers as Table -->
+      <div class="card p-5" id="answers-section" style="display: none;">
+       <h2 class="text-lg font-semibold text-slate-800 mb-4">📝 Jawaban Siswa</h2>
+       <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+         <thead>
+          <tr class="bg-slate-100">
+           <th class="px-2 py-2 text-left">No</th>
+           <th class="px-2 py-2 text-center">Alas</th>
+           <th class="px-2 py-2 text-center">Tinggi</th>
+           <th class="px-2 py-2 text-center">Miring</th>
+           <th class="px-2 py-2 text-center">t/m</th>
+           <th class="px-2 py-2 text-center">a/m</th>
+           <th class="px-2 py-2 text-center">t/a</th>
+          </tr>
+         </thead>
+         <tbody id="answers-table-body">
+         </tbody>
+        </table>
+       </div>
+      </div><!-- Discovery - PERTANYAAN PENGGALI -->
+      <div class="card p-5" id="discovery-section">
+       <h2 class="text-lg font-semibold text-slate-800 mb-4">💡 Refleksi &amp; Penemuan</h2>
+       <div id="discovery-questions" class="space-y-4">
+        <div class="text-center py-6 text-slate-400">
+         <p>Kerjakan perbandingan dari data Anda untuk melihat pertanyaan!</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Math Keyboard -->
+  <div id="math-keyboard" class="math-keyboard hidden">
+   <div class="flex flex-wrap justify-center gap-1"><button class="math-btn" onclick="insertMathSymbol('/')">a/b</button> <button class="math-btn" onclick="insertMathSymbol('sqrt')"><span class="sqrt-display">√<span class="sqrt-radicand">x</span></span></button> <button class="math-btn" onclick="insertMathSymbol('(')"> ( </button> <button class="math-btn" onclick="insertMathSymbol(')')"> ) </button> <button class="math-btn" onclick="insertMathSymbol('*')"> × </button> <button class="math-btn" onclick="deleteLast()">⌫</button> <button class="math-btn" onclick="closeMathKeyboard()">✕ Tutup</button>
+   </div>
+  </div>
+  <script>
+    const state = {
+      currentAngle: 30,
+      data: { 30: [], 45: [], 60: [] },
+      studentAnswers: { 30: [], 45: [], 60: [] },
+      discoveries: { 30: { 't-m': null, 'a-m': null, 't-a': null }, 45: { 't-m': null, 'a-m': null, 't-a': null }, 60: { 't-m': null, 'a-m': null, 't-a': null } },
+      currentSides: { alas: null, tinggi: null, miring: null },
+      inputSource: null,
+      selectedRowId: null,
+      currentInputField: null
+    };
+
+    const exactRatios = {
+      30: { 't-m': { num: 1, den: 2, sqrt: null }, 'a-m': { num: 1, den: 2, sqrt: 3, sqrtPos: 'num' }, 't-a': { num: 1, den: 1, sqrt: 3, sqrtPos: 'den' } },
+      45: { 't-m': { num: 1, den: 1, sqrt: 2, sqrtPos: 'den' }, 'a-m': { num: 1, den: 1, sqrt: 2, sqrtPos: 'den' }, 't-a': { num: 1, den: 1, sqrt: null } },
+      60: { 't-m': { num: 1, den: 2, sqrt: 3, sqrtPos: 'num' }, 'a-m': { num: 1, den: 2, sqrt: null }, 't-a': { num: 1, den: 1, sqrt: 3, sqrtPos: 'num' } }
+    };
+
+    // ==================== MATH PARSER ====================
+    function parseMathExpression(str) {
+      if (!str || str.trim() === '') return null;
+      str = str.trim().toLowerCase().replace(/\s+/g, '');
+      
+      if (/^-?\d+\.?\d*$/.test(str)) {
+        return { value: parseFloat(str), display: str, type: 'number' };
+      }
+
+      const fractionMatch = str.match(/^(-?\d+\.?\d*)\/(-?\d+\.?\d*)$/);
+      if (fractionMatch) {
+        const num = parseFloat(fractionMatch[1]);
+        const den = parseFloat(fractionMatch[2]);
+        if (den === 0) return null;
+        return { value: num / den, display: `${fractionMatch[1]}/${fractionMatch[2]}`, type: 'fraction', num: num, den: den };
+      }
+
+      const sqrtMatch = str.match(/^sqrt\((\d+\.?\d*)\)$/);
+      if (sqrtMatch) {
+        const n = parseFloat(sqrtMatch[1]);
+        return { value: Math.sqrt(n), display: `sqrt(${n})`, type: 'sqrt', radicand: n, coefficient: 1 };
+      }
+
+      const kSqrtMatch = str.match(/^(-?\d+\.?\d*)\*?sqrt\((\d+\.?\d*)\)$/);
+      if (kSqrtMatch) {
+        const k = parseFloat(kSqrtMatch[1]);
+        const n = parseFloat(kSqrtMatch[2]);
+        return { value: k * Math.sqrt(n), display: `${k}sqrt(${n})`, type: 'ksqrt', radicand: n, coefficient: k };
+      }
+
+      const sqrtFracMatch = str.match(/^sqrt\((\d+\.?\d*)\)\/(\d+\.?\d*)$/);
+      if (sqrtFracMatch) {
+        const n = parseFloat(sqrtFracMatch[1]);
+        const m = parseFloat(sqrtFracMatch[2]);
+        if (m === 0) return null;
+        return { value: Math.sqrt(n) / m, display: `sqrt(${n})/${m}`, type: 'sqrtfrac', radicand: n, denominator: m };
+      }
+
+      const kSqrtFracMatch = str.match(/^(\d+\.?\d*)\*?sqrt\((\d+\.?\d*)\)\/(\d+\.?\d*)$/);
+      if (kSqrtFracMatch) {
+        const k = parseFloat(kSqrtFracMatch[1]);
+        const n = parseFloat(kSqrtFracMatch[2]);
+        const m = parseFloat(kSqrtFracMatch[3]);
+        if (m === 0) return null;
+        return { value: (k * Math.sqrt(n)) / m, display: `${k}sqrt(${n})/${m}`, type: 'ksqrtfrac', coefficient: k, radicand: n, denominator: m };
+      }
+
+      return null;
+    }
+
+    // ==================== MATH DISPLAY FORMATTER ====================
+    function renderMathDisplay(expression) {
+      if (!expression) return '-';
+      
+      const expr = expression.toLowerCase().replace(/\s+/g, '');
+      
+      // Pecahan biasa: a/b
+      const fracMatch = expr.match(/^(\d+\.?\d*)\/(\d+\.?\d*)$/);
+      if (fracMatch) {
+        return `<div class="fraction-display"><div class="fraction-num">${fracMatch[1]}</div><div class="fraction-den">${fracMatch[2]}</div></div>`;
+      }
+
+      // Akar murni: sqrt(n)
+      const sqrtMatch = expr.match(/^sqrt\((\d+\.?\d*)\)$/);
+      if (sqrtMatch) {
+        return `<span class="sqrt-display">√<span class="sqrt-radicand">${sqrtMatch[1]}</span></span>`;
+      }
+
+      // k*sqrt(n)
+      const kSqrtMatch = expr.match(/^(\d+\.?\d*)\*?sqrt\((\d+\.?\d*)\)$/);
+      if (kSqrtMatch) {
+        return `<span>${kSqrtMatch[1]}<span class="sqrt-display">√<span class="sqrt-radicand">${kSqrtMatch[2]}</span></span></span>`;
+      }
+
+      // sqrt(n)/m
+      const sqrtFracMatch = expr.match(/^sqrt\((\d+\.?\d*)\)\/(\d+\.?\d*)$/);
+      if (sqrtFracMatch) {
+        return `<div class="fraction-display"><div class="fraction-num"><span class="sqrt-display">√<span class="sqrt-radicand">${sqrtFracMatch[1]}</span></span></div><div class="fraction-den">${sqrtFracMatch[2]}</div></div>`;
+      }
+
+      // k*sqrt(n)/m
+      const kSqrtFracMatch = expr.match(/^(\d+\.?\d*)\*?sqrt\((\d+\.?\d*)\)\/(\d+\.?\d*)$/);
+      if (kSqrtFracMatch) {
+        return `<div class="fraction-display"><div class="fraction-num"><span>${kSqrtFracMatch[1]}<span class="sqrt-display">√<span class="sqrt-radicand">${kSqrtFracMatch[2]}</span></span></span></div><div class="fraction-den">${kSqrtFracMatch[3]}</div></div>`;
+      }
+
+      // 1/sqrt(n) - tampilkan sebagai sqrt(n)/n
+      const fracSqrtMatch = expr.match(/^1\/sqrt\((\d+\.?\d*)\)$/);
+      if (fracSqrtMatch) {
+        const n = parseFloat(fracSqrtMatch[1]);
+        return `<div class="fraction-display"><div class="fraction-num"><span class="sqrt-display">√<span class="sqrt-radicand">${n}</span></span></div><div class="fraction-den">${n}</div></div>`;
+      }
+
+      // Bilangan desimal
+      if (/^\d+\.?\d*$/.test(expr)) {
+        return `<span>${expr}</span>`;
+      }
+
+      return `<span>${expression}</span>`;
+    }
+
+    function formatCalculatedValue(value) {
+      const tolerance = 0.0001;
+      
+      if (Math.abs(value - Math.round(value)) < tolerance) {
+        return Math.round(value).toString();
+      }
+
+      const sqrtTests = [2, 3, 5, 6, 7];
+      for (const n of sqrtTests) {
+        const sqrtN = Math.sqrt(n);
+        const k = value / sqrtN;
+        if (Math.abs(k - Math.round(k)) < tolerance && Math.round(k) !== 0) {
+          const kInt = Math.round(k);
+          return kInt === 1 ? `√${n}` : `${kInt}√${n}`;
+        }
+      }
+
+      for (let den = 2; den <= 10; den++) {
+        const num = value * den;
+        if (Math.abs(num - Math.round(num)) < tolerance) {
+          return `${Math.round(num)}/${den}`;
+        }
+      }
+
+      return value.toFixed(4).replace(/\.?0+$/, '');
+    }
+
+    // ==================== MATH KEYBOARD ====================
+    function showMathKeyboard(inputElement) {
+      state.currentInputField = inputElement;
+      document.getElementById('math-keyboard').classList.remove('hidden');
+    }
+
+    function closeMathKeyboard() {
+      document.getElementById('math-keyboard').classList.add('hidden');
+      state.currentInputField = null;
+    }
+
+    function insertMathSymbol(symbol) {
+      if (!state.currentInputField) return;
+
+      const input = state.currentInputField;
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const text = input.value;
+
+      let insertion = symbol;
+      if (symbol === 'sqrt') insertion = 'sqrt()';
+      else if (symbol === '/') insertion = '/';
+
+      const newText = text.substring(0, start) + insertion + text.substring(end);
+      input.value = newText;
+
+      if (symbol === 'sqrt') {
+        input.selectionStart = input.selectionEnd = start + 5;
+      } else {
+        input.selectionStart = input.selectionEnd = start + insertion.length;
+      }
+
+      input.focus();
+    }
+
+    function updateMathPreview(type) {
+      const inputId = `answer-${type}`;
+      const previewId = `preview-${type}`;
+      const input = document.getElementById(inputId);
+      const preview = document.getElementById(previewId);
+      
+      if (!input.value.trim()) {
+        preview.innerHTML = '';
+        return;
+      }
+      
+      preview.innerHTML = renderMathDisplay(input.value);
+    }
+
+    function deleteLast() {
+      if (!state.currentInputField) return;
+      const input = state.currentInputField;
+      input.value = input.value.slice(0, -1);
+      input.focus();
+    }
+
+    // ==================== UI UPDATES ====================
+    function setAngle(angle) {
+      state.currentAngle = angle;
+      
+      [30, 45, 60].forEach(a => {
+        const btn = document.getElementById(`btn-${a}`);
+        btn.className = a === angle 
+          ? 'flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-200 bg-blue-600 text-white shadow-lg'
+          : 'flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-200 bg-slate-100 text-slate-600 hover:bg-blue-100';
+      });
+
+      document.getElementById('current-angle-badge').textContent = `θ = ${angle}°`;
+      clearInputs();
+      drawTriangle(angle);
+      updateDataTable();
+      updateRowSelector();
+      closeMathKeyboard();
+    }
+
+    function clearInputs() {
+      ['alas', 'tinggi', 'miring'].forEach(side => {
+        document.getElementById(`input-${side}`).value = '';
+      });
+      document.getElementById('calculated-values').classList.add('hidden');
+      document.getElementById('btn-add-data').disabled = true;
+      state.currentSides = { alas: null, tinggi: null, miring: null };
+      state.inputSource = null;
+    }
+
+    function handleSideInput(inputSide) {
+      const inputEl = document.getElementById(`input-${inputSide}`);
+      const inputStr = inputEl.value.trim();
+      
+      if (!inputStr) {
+        clearInputs();
+        return;
+      }
+
+      const parsed = parseMathExpression(inputStr);
+      if (!parsed || parsed.value <= 0 || parsed.value > 100) {
+        document.getElementById('calculated-values').classList.add('hidden');
+        document.getElementById('btn-add-data').disabled = true;
+        return;
+      }
+
+      state.inputSource = inputSide;
+      const rad = (state.currentAngle * Math.PI) / 180;
+      const sinA = Math.sin(rad);
+      const cosA = Math.cos(rad);
+      const tanA = Math.tan(rad);
+
+      let alas, tinggi, miring;
+      if (inputSide === 'miring') {
+        miring = parsed.value;
+        tinggi = miring * sinA;
+        alas = miring * cosA;
+      } else if (inputSide === 'tinggi') {
+        tinggi = parsed.value;
+        miring = tinggi / sinA;
+        alas = tinggi / tanA;
+      } else {
+        alas = parsed.value;
+        miring = alas / cosA;
+        tinggi = alas * tanA;
+      }
+
+      state.currentSides = {
+        alas: { value: alas, display: formatCalculatedValue(alas), inputDisplay: inputSide === 'alas' ? parsed.display : null },
+        tinggi: { value: tinggi, display: formatCalculatedValue(tinggi), inputDisplay: inputSide === 'tinggi' ? parsed.display : null },
+        miring: { value: miring, display: formatCalculatedValue(miring), inputDisplay: inputSide === 'miring' ? parsed.display : null }
+      };
+
+      document.getElementById('calc-alas').innerHTML = renderMathDisplay(state.currentSides.alas.inputDisplay || state.currentSides.alas.display);
+      document.getElementById('calc-tinggi').innerHTML = renderMathDisplay(state.currentSides.tinggi.inputDisplay || state.currentSides.tinggi.display);
+      document.getElementById('calc-miring').innerHTML = renderMathDisplay(state.currentSides.miring.inputDisplay || state.currentSides.miring.display);
+      
+      document.getElementById('calculated-values').classList.remove('hidden');
+      
+      ['alas', 'tinggi', 'miring'].forEach(side => {
+        if (side !== inputSide) {
+          const el = document.getElementById(`input-${side}`);
+          el.value = state.currentSides[side].display;
+        }
+      });
+
+      const canAdd = state.data[state.currentAngle].length < 5;
+      document.getElementById('btn-add-data').disabled = !canAdd;
+
+      drawTriangle(state.currentAngle, { alas, tinggi, miring });
+    }
+
+    function drawTriangle(angle, sides = null) {
+      const svg = document.getElementById('triangle-svg');
+      const width = 400, height = 320;
+      const padding = 60;
+      const maxSize = Math.min(width - 2 * padding, height - 2 * padding - 40);
+
+      const rad = (angle * Math.PI) / 180;
+      let triWidth, triHeight;
+      if (angle === 45) {
+        triWidth = triHeight = maxSize * 0.7;
+      } else if (angle === 30) {
+        triWidth = maxSize * 0.85;
+        triHeight = triWidth * Math.tan(rad);
+      } else {
+        triHeight = maxSize * 0.75;
+        triWidth = triHeight / Math.tan(rad);
+      }
+
+      const startX = (width - triWidth) / 2;
+      const startY = height - padding - 20;
+
+      const A = { x: startX, y: startY };
+      const B = { x: startX + triWidth, y: startY };
+      const C = { x: startX, y: startY - triHeight };
+
+      const displayAlas = sides ? formatCalculatedValue(sides.alas) : '';
+      const displayTinggi = sides ? formatCalculatedValue(sides.tinggi) : '';
+      const displayMiring = sides ? formatCalculatedValue(sides.miring) : '';
+
+      svg.innerHTML = `
+        <polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}" fill="rgba(59, 130, 246, 0.1)" stroke="#3b82f6" stroke-width="2.5"/>
+        <path d="M ${A.x + 15},${A.y} L ${A.x + 15},${A.y - 15} L ${A.x},${A.y - 15}" fill="none" stroke="#64748b" stroke-width="1.5"/>
+        <path d="M ${B.x - 25},${B.y} A 25 25 0 0 0 ${B.x - 25 * Math.cos(rad)},${B.y - 25 * Math.sin(rad)}" fill="none" stroke="#f59e0b" stroke-width="2"/>
+        <text x="${B.x - 45}" y="${B.y - 10}" font-size="14" font-weight="600" fill="#f59e0b">${angle}°</text>
+        <text x="${(A.x + B.x) / 2}" y="${A.y + 25}" text-anchor="middle" font-size="13" fill="#3b82f6">a${displayAlas ? `=${displayAlas}` : ''}</text>
+        <text x="${A.x - 20}" y="${(A.y + C.y) / 2}" font-size="13" fill="#10b981">t${displayTinggi ? `=${displayTinggi}` : ''}</text>
+        <text x="${(B.x + C.x) / 2}" y="${(B.y + C.y) / 2 - 10}" font-size="13" fill="#8b5cf6">m${displayMiring ? `=${displayMiring}` : ''}</text>
+        <circle cx="${A.x}" cy="${A.y}" r="4" fill="#1e293b"/>
+        <circle cx="${B.x}" cy="${B.y}" r="4" fill="#1e293b"/>
+        <circle cx="${C.x}" cy="${C.y}" r="4" fill="#1e293b"/>
+      `;
+    }
+
+    function addDataPoint() {
+      if (state.data[state.currentAngle].length >= 5 || !state.currentSides.alas) return;
+
+      const dataPoint = {
+        id: Date.now(),
+        alas: state.currentSides.alas.inputDisplay || state.currentSides.alas.display,
+        tinggi: state.currentSides.tinggi.inputDisplay || state.currentSides.tinggi.display,
+        miring: state.currentSides.miring.inputDisplay || state.currentSides.miring.display,
+        values: { alas: state.currentSides.alas.value, tinggi: state.currentSides.tinggi.value, miring: state.currentSides.miring.value }
+      };
+
+      state.data[state.currentAngle].push(dataPoint);
+      clearInputs();
+      updateDataTable();
+      updateRowSelector();
+    }
+
+    function removeDataPoint(id) {
+      state.data[state.currentAngle] = state.data[state.currentAngle].filter(d => d.id !== id);
+      state.studentAnswers[state.currentAngle] = state.studentAnswers[state.currentAngle].filter(a => a.dataId !== id);
+      updateDataTable();
+      updateRowSelector();
+      updateAnswersDisplay();
+    }
+
+    function clearCurrentAngleData() {
+      state.data[state.currentAngle] = [];
+      state.studentAnswers[state.currentAngle] = [];
+      state.discoveries[state.currentAngle] = { 't-m': null, 'a-m': null, 't-a': null };
+      updateDataTable();
+      updateRowSelector();
+      updateAnswersDisplay();
+      updateDiscoveryQuestions();
+    }
+
+    function updateDataTable() {
+      const tbody = document.getElementById('data-table-body');
+      const data = state.data[state.currentAngle];
+      const count = data.length;
+
+      document.getElementById('data-count').textContent = `${count}/5`;
+
+      if (count === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-2 py-6 text-center text-slate-400">Belum ada data</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map((d, i) => `
+        <tr class="border-b border-slate-100 hover:bg-blue-50">
+          <td class="px-2 py-2 font-medium">${i + 1}</td>
+          <td class="px-2 py-2 text-center">${renderMathDisplay(d.alas)}</td>
+          <td class="px-2 py-2 text-center">${renderMathDisplay(d.tinggi)}</td>
+          <td class="px-2 py-2 text-center">${renderMathDisplay(d.miring)}</td>
+          <td class="px-2 py-2 text-center"><button onclick="removeDataPoint(${d.id})" class="text-red-500 hover:text-red-700">✕</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function updateRowSelector() {
+      const selector = document.getElementById('row-selector');
+      const data = state.data[state.currentAngle];
+      
+      selector.innerHTML = '<option value="">-- Pilih Baris --</option>';
+      data.forEach((d, i) => {
+        const option = document.createElement('option');
+        option.value = d.id;
+        option.textContent = `Baris ${i + 1}`;
+        selector.appendChild(option);
+      });
+
+      selector.value = '';
+      closeRowForm();
+    }
+
+    function selectRowFromDropdown() {
+      const selector = document.getElementById('row-selector');
+      const selectedId = parseInt(selector.value);
+      
+      if (!selectedId) {
+        closeRowForm();
+        return;
+      }
+
+      const data = state.data[state.currentAngle].find(d => d.id === selectedId);
+      const answer = state.studentAnswers[state.currentAngle].find(a => a.dataId === selectedId);
+      
+      openRowForm(data, answer);
+      state.selectedRowId = selectedId;
+    }
+
+    function openRowForm(data, existingAnswer) {
+      document.getElementById('row-detail-display').innerHTML = `
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200 text-left">
+          <p class="text-sm text-blue-800 mb-2"><strong>Data yang dipilih:</strong></p>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div><p class="text-xs text-slate-500">Alas</p><p>${renderMathDisplay(data.alas)}</p></div>
+            <div><p class="text-xs text-slate-500">Tinggi</p><p>${renderMathDisplay(data.tinggi)}</p></div>
+            <div><p class="text-xs text-slate-500">Miring</p><p>${renderMathDisplay(data.miring)}</p></div>
+          </div>
+        </div>
+      `;
+
+      ['tm', 'am', 'ta'].forEach(type => {
+        const feedback = document.getElementById(`feedback-${type}`);
+        const preview = document.getElementById(`preview-${type}`);
+        const input = document.getElementById(`answer-${type.includes('tm') ? 'tm' : type.includes('am') ? 'am' : 'ta'}`);
+        feedback.classList.add('hidden');
+        feedback.textContent = '';
+        preview.innerHTML = '';
+        input.classList.remove('border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50');
+        input.classList.add('border-slate-300');
+      });
+
+      if (existingAnswer) {
+        document.getElementById('answer-tm').value = existingAnswer['t-m'] || '';
+        document.getElementById('answer-am').value = existingAnswer['a-m'] || '';
+        document.getElementById('answer-ta').value = existingAnswer['t-a'] || '';
+      } else {
+        document.getElementById('answer-tm').value = '';
+        document.getElementById('answer-am').value = '';
+        document.getElementById('answer-ta').value = '';
+      }
+
+      document.getElementById('ratio-input-form').classList.remove('hidden');
+    }
+
+    function closeRowForm() {
+      document.getElementById('row-detail-display').innerHTML = '<p>Pilih salah satu baris untuk mengisi perbandingan sisi</p>';
+      document.getElementById('ratio-input-form').classList.add('hidden');
+      state.selectedRowId = null;
+      closeMathKeyboard();
+    }
+
+    function submitRowAnswer() {
+      if (!state.selectedRowId) return;
+
+      const tmInput = document.getElementById('answer-tm').value.trim();
+      const amInput = document.getElementById('answer-am').value.trim();
+      const taInput = document.getElementById('answer-ta').value.trim();
+
+      const angle = state.currentAngle;
+      const expected = exactRatios[angle];
+
+      function checkAnswer(ratioType, inputStr) {
+        if (!inputStr) return { valid: false, correct: false };
+
+        const parsed = parseMathExpression(inputStr);
+        if (!parsed) return { valid: false, correct: false };
+
+        let expectedValue;
+        const exp = expected[ratioType];
+        if (!exp.sqrt) {
+          expectedValue = exp.num / exp.den;
+        } else if (exp.sqrtPos === 'num') {
+          expectedValue = (exp.num * Math.sqrt(exp.sqrt)) / exp.den;
+        } else {
+          expectedValue = exp.num / (exp.den * Math.sqrt(exp.sqrt));
+        }
+
+        const tolerance = 0.001;
+        const isCorrect = Math.abs(parsed.value - expectedValue) < tolerance;
+
+        return { valid: true, correct: isCorrect };
+      }
+
+      const checkTm = checkAnswer('t-m', tmInput);
+      const checkAm = checkAnswer('a-m', amInput);
+      const checkTa = checkAnswer('t-a', taInput);
+
+      let allValid = true;
+      if (tmInput && !checkTm.valid) { document.getElementById('feedback-tm').textContent = '❌ Format tidak valid'; document.getElementById('feedback-tm').classList.remove('hidden', 'text-green-600'); document.getElementById('feedback-tm').classList.add('text-red-600'); allValid = false; } 
+      else if (tmInput && checkTm.valid && !checkTm.correct) { document.getElementById('feedback-tm').textContent = '❌ Belum tepat'; document.getElementById('feedback-tm').classList.remove('hidden', 'text-green-600'); document.getElementById('feedback-tm').classList.add('text-red-600'); allValid = false; }
+      else if (tmInput && checkTm.correct) { document.getElementById('feedback-tm').textContent = '✅ Benar!'; document.getElementById('feedback-tm').classList.remove('hidden', 'text-red-600'); document.getElementById('feedback-tm').classList.add('text-green-600'); document.getElementById('answer-tm').classList.add('border-green-500', 'bg-green-50'); }
+
+      if (amInput && !checkAm.valid) { document.getElementById('feedback-am').textContent = '❌ Format tidak valid'; document.getElementById('feedback-am').classList.remove('hidden', 'text-green-600'); document.getElementById('feedback-am').classList.add('text-red-600'); allValid = false; }
+      else if (amInput && checkAm.valid && !checkAm.correct) { document.getElementById('feedback-am').textContent = '❌ Belum tepat'; document.getElementById('feedback-am').classList.remove('hidden', 'text-green-600'); document.getElementById('feedback-am').classList.add('text-red-600'); allValid = false; }
+      else if (amInput && checkAm.correct) { document.getElementById('feedback-am').textContent = '✅ Benar!'; document.getElementById('feedback-am').classList.remove('hidden', 'text-red-600'); document.getElementById('feedback-am').classList.add('text-green-600'); document.getElementById('answer-am').classList.add('border-green-500', 'bg-green-50'); }
+
+      if (taInput && !checkTa.valid) { document.getElementById('feedback-ta').textContent = '❌ Format tidak valid'; document.getElementById('feedback-ta').classList.remove('hidden', 'text-green-600'); document.getElementById('feedback-ta').classList.add('text-red-600'); allValid = false; }
+      else if (taInput && checkTa.valid && !checkTa.correct) { document.getElementById('feedback-ta').textContent = '❌ Belum tepat'; document.getElementById('feedback-ta').classList.remove('hidden', 'text-green-600'); document.getElementById('feedback-ta').classList.add('text-red-600'); allValid = false; }
+      else if (taInput && checkTa.correct) { document.getElementById('feedback-ta').textContent = '✅ Benar!'; document.getElementById('feedback-ta').classList.remove('hidden', 'text-red-600'); document.getElementById('feedback-ta').classList.add('text-green-600'); document.getElementById('answer-ta').classList.add('border-green-500', 'bg-green-50'); }
+
+      if (!allValid) return;
+
+      const existingIndex = state.studentAnswers[angle].findIndex(a => a.dataId === state.selectedRowId);
+      const answerObj = {
+        dataId: state.selectedRowId,
+        't-m': tmInput || null,
+        'a-m': amInput || null,
+        't-a': taInput || null
+      };
+
+      if (existingIndex >= 0) {
+        state.studentAnswers[angle][existingIndex] = answerObj;
+      } else {
+        state.studentAnswers[angle].push(answerObj);
+      }
+
+      if (checkTm.correct && checkAm.correct && checkTa.correct) {
+        state.discoveries[angle]['t-m'] = tmInput;
+        state.discoveries[angle]['a-m'] = amInput;
+        state.discoveries[angle]['t-a'] = taInput;
+      }
+
+      updateAnswersDisplay();
+      updateDiscoveryQuestions();
+    }
+
+    function updateAnswersDisplay() {
+      const answers = state.studentAnswers[state.currentAngle];
+
+      if (answers.length === 0) {
+        document.getElementById('answers-section').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('answers-section').style.display = 'block';
+      const data = state.data[state.currentAngle];
+
+      const tbody = document.getElementById('answers-table-body');
+      tbody.innerHTML = answers.map((answer, i) => {
+        const dataPoint = data.find(d => d.id === answer.dataId);
+        if (!dataPoint) return '';
+
+        return `
+          <tr class="border-b border-slate-100 hover:bg-blue-50">
+            <td class="px-2 py-2 font-medium text-center">${i + 1}</td>
+            <td class="px-2 py-2 text-center">${renderMathDisplay(dataPoint.alas)}</td>
+            <td class="px-2 py-2 text-center">${renderMathDisplay(dataPoint.tinggi)}</td>
+            <td class="px-2 py-2 text-center">${renderMathDisplay(dataPoint.miring)}</td>
+            <td class="px-2 py-2 text-center">${answer['t-m'] ? renderMathDisplay(answer['t-m']) : '-'}</td>
+            <td class="px-2 py-2 text-center">${answer['a-m'] ? renderMathDisplay(answer['a-m']) : '-'}</td>
+            <td class="px-2 py-2 text-center">${answer['t-a'] ? renderMathDisplay(answer['t-a']) : '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateDiscoveryQuestions() {
+      const content = document.getElementById('discovery-questions');
+      const disc = state.discoveries[state.currentAngle];
+
+      if (!disc['t-m'] || !disc['a-m'] || !disc['t-a']) {
+        content.innerHTML = '<div class="text-center py-6 text-slate-400"><p>Selesaikan perhitungan perbandingan untuk melihat pertanyaan!</p></div>';
+        return;
+      }
+
+      const questionsHTML = `
+        <div class="space-y-4">
+          <div class="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500">
+            <p class="font-semibold text-purple-900 mb-3">❓ Pertanyaan 1</p>
+            <p class="text-sm text-purple-800 mb-3"><strong>Amati seluruh data yang telah kamu kumpulkan.</strong> Apakah ada kesamaan pada perbandingan t/m, a/m, dan t/a di setiap baris data?</p>
+            <p class="text-sm text-purple-700 mb-2">Jelaskan apa yang kamu temukan dan mengapa menurut kamu hal itu terjadi.</p>
+            <textarea id="answer-q1" class="w-full px-3 py-2 border-2 border-purple-300 rounded-lg focus:border-purple-500 text-sm" rows="3" placeholder="Tulis jawabanmu di sini..."></textarea>
+          </div>
+
+          <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+            <p class="font-semibold text-blue-900 mb-3">❓ Pertanyaan 2</p>
+            <p class="text-sm text-blue-800 mb-3"><strong>Perhatikan ukuran segitiga di setiap data.</strong> Apakah perbedaan ukuran segitiga mempengaruhi hasil perbandingan t/m, a/m, dan t/a?</p>
+            <p class="text-sm text-blue-700 mb-2">Dengan kata lain, apakah perbandingan ini tetap sama atau berubah ketika ukuran segitiga berbeda?</p>
+            <textarea id="answer-q2" class="w-full px-3 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 text-sm" rows="3" placeholder="Tulis jawabanmu di sini..."></textarea>
+          </div>
+
+          <div class="bg-emerald-50 rounded-lg p-4 border-l-4 border-emerald-500">
+            <p class="font-semibold text-emerald-900 mb-3">❓ Pertanyaan 3</p>
+            <p class="text-sm text-emerald-800 mb-3"><strong>Berdasarkan penemuanmu,</strong> nyatakan hubungan perbandingan sisi pada sudut ${state.currentAngle}° dengan melengkapi kalimat berikut:</p>
+            <p class="text-sm text-emerald-700 mb-3 font-semibold bg-white rounded p-2">"Untuk sudut ${state.currentAngle}°, nilai t/m = _____, nilai a/m = _____, dan nilai t/a = _____"</p>
+            <textarea id="answer-q3" class="w-full px-3 py-2 border-2 border-emerald-300 rounded-lg focus:border-emerald-500 text-sm" rows="2" placeholder="Tulis jawabanmu di sini..."></textarea>
+          </div>
+
+          <button onclick="showDiscoverySummary()" class="w-full btn-primary py-2 px-4 text-white font-semibold rounded-lg text-sm">
+            ✅ Selesai Menjawab
+          </button>
+        </div>
+      `;
+
+      content.innerHTML = questionsHTML;
+    }
+
+    function showDiscoverySummary() {
+      const q1 = document.getElementById('answer-q1')?.value || '';
+      const q2 = document.getElementById('answer-q2')?.value || '';
+      const q3 = document.getElementById('answer-q3')?.value || '';
+
+      const disc = state.discoveries[state.currentAngle];
+
+      const summaryHTML = `
+        <div class="space-y-4 mt-4">
+          <div class="bg-green-50 rounded-lg p-4 border-2 border-green-200">
+            <h3 class="font-bold text-green-800 mb-3">✨ Ringkasan Penemuanmu untuk Sudut ${state.currentAngle}°</h3>
+            
+            <div class="bg-white rounded-lg p-3 mb-3 border border-green-200">
+              <p class="text-sm font-semibold text-slate-700 mb-2">Perbandingan Sisi yang Kamu Temukan:</p>
+              <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                <div class="bg-purple-50 rounded p-2">
+                  <p class="text-xs text-slate-600">t/m</p>
+                  <p class="font-semibold text-purple-700">${renderMathDisplay(disc['t-m'])}</p>
+                </div>
+                <div class="bg-blue-50 rounded p-2">
+                  <p class="text-xs text-slate-600">a/m</p>
+                  <p class="font-semibold text-blue-700">${renderMathDisplay(disc['a-m'])}</p>
+                </div>
+                <div class="bg-emerald-50 rounded p-2">
+                  <p class="text-xs text-slate-600">t/a</p>
+                  <p class="font-semibold text-emerald-700">${renderMathDisplay(disc['t-a'])}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-lg p-3 mb-3 border border-green-200">
+              <p class="text-sm font-semibold text-slate-700 mb-2">Jawabanmu:</p>
+              <div class="space-y-2 text-xs text-slate-700">
+                ${q1 ? `<p><strong>Tentang kesamaan di semua data:</strong><br/>"${q1}"</p>` : ''}
+                ${q2 ? `<p><strong>Tentang pengaruh ukuran segitiga:</strong><br/>"${q2}"</p>` : ''}
+                ${q3 ? `<p><strong>Hubungan perbandingan untuk sudut ${state.currentAngle}°:</strong><br/>"${q3}"</p>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('discovery-questions').innerHTML = summaryHTML;
+    }
+
+    // ==================== ELEMENT SDK INTEGRATION ====================
+    const defaultConfig = {
+      main_title: '🔬 Laboratorium Virtual Segitiga Siku-Siku',
+      instruction_text: 'Pilih sudut, kumpulkan data, dan temukan pola perbandingan sisi!'
+    };
+
+    async function onConfigChange(config) {
+      document.getElementById('main-title').textContent = config.main_title || defaultConfig.main_title;
+      document.getElementById('instruction-text').textContent = config.instruction_text || defaultConfig.instruction_text;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [
+          { get: () => '#3b82f6', set: (v) => {} },
+          { get: () => '#f59e0b', set: (v) => {} },
+          { get: () => '#1e293b', set: (v) => {} },
+          { get: () => '#10b981', set: (v) => {} },
+          { get: () => '#8b5cf6', set: (v) => {} }
+        ],
+        borderables: [],
+        fontEditable: { get: () => 'Plus Jakarta Sans', set: (v) => {} },
+        fontSizeable: { get: () => 16, set: (v) => {} }
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([['main_title', config.main_title || defaultConfig.main_title], ['instruction_text', config.instruction_text || defaultConfig.instruction_text]]);
+    }
+
+    function init() {
+      if (window.elementSdk) {
+        window.elementSdk.init({ defaultConfig, onConfigChange, mapToCapabilities, mapToEditPanelValues });
+      }
+      setAngle(30);
+      drawTriangle(30);
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ca2c50a418fb772',t:'MTc3MDQ2NjA3NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
