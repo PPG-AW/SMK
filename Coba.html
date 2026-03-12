@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Latihan Peluang - Kirim Data</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+</head>
+<body class="bg-gray-100 p-8">
+
+    <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-xl font-bold mb-4">Input Data Siswa</h2>
+        
+        <div class="mb-4">
+            <label class="block text-sm">Nama Lengkap</label>
+            <input type="text" id="studentName" class="w-full border p-2 rounded">
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm">Kelas</label>
+            <input type="text" id="studentClass" class="w-full border p-2 rounded">
+        </div>
+
+        <button onclick="kirimData()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+            Kirim Hasil Jawaban
+        </button>
+        
+        <p id="status" class="mt-4 text-center text-sm"></p>
+    </div>
+
+    <script>
+        // Ganti URL ini dengan URL Web App dari Google Apps Script Anda
+        const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbyihf4jzhUVGMp9hUF2BQPBcEuDO3Nl3O2hG5Hc_AA2nexcRk8qhHNeyR3OfLr8446r/exec";
+
+        function kirimData() {
+            const status = document.getElementById('status');
+            const data = {
+                nama: document.getElementById('studentName').value,
+                kelas: document.getElementById('studentClass').value,
+                skor: "100" // Anda bisa mengubah ini sesuai hasil perhitungan logika Anda
+            };
+
+            status.textContent = "Sedang mengirim...";
+
+            fetch(URL_GOOGLE_SHEETS, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                status.textContent = "Data berhasil terkirim!";
+                status.className = "mt-4 text-center text-sm text-green-600";
+            })
+            .catch((error) => {
+                status.textContent = "Gagal terkirim. Cek koneksi.";
+                status.className = "mt-4 text-center text-sm text-red-600";
+            });
+        }
+    </script>
+</body>
+</html>
